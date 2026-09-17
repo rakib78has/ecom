@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Snap OCR - Result</title>
+<link rel="icon" href="icons/icon48.png">
+<style>
+  :root {
+    color-scheme: light dark;
+    --accent: #2563eb;
+    --border: #d1d5db;
+    --bg: #f8fafc;
+    --panel-bg: #ffffff;
+    --text: #111827;
+    --muted: #6b7280;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --border: #334155;
+      --bg: #0f172a;
+      --panel-bg: #1e293b;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+    }
+  }
+  :root[data-theme="dark"] {
+    --border: #334155;
+    --bg: #0f172a;
+    --panel-bg: #1e293b;
+    --text: #e5e7eb;
+    --muted: #9ca3af;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 24px;
+  }
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1100px;
+    margin: 0 auto 16px;
+  }
+  h1 {
+    font-size: 18px;
+    margin: 0;
+  }
+  .theme-toggle {
+    font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--panel-bg);
+    color: var(--text);
+    cursor: pointer;
+  }
+  .layout {
+    display: flex;
+    gap: 24px;
+    max-width: 1100px;
+    margin: 0 auto;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .panel {
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .preview-panel {
+    flex: 0 0 320px;
+  }
+  .preview-panel img {
+    max-width: 100%;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    display: block;
+  }
+  .result-panel {
+    flex: 1 1 400px;
+    min-width: 320px;
+  }
+  .lang-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    font-size: 13px;
+  }
+  .lang-row select {
+    font: inherit;
+    font-size: 13px;
+    padding: 5px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--panel-bg);
+    color: var(--text);
+  }
+  .lang-hint {
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .progress-wrap {
+    margin: 12px 0;
+  }
+  .progress-label {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .progress-bar {
+    height: 8px;
+    border-radius: 4px;
+    background: var(--border);
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    transition: width 0.15s ease;
+  }
+  textarea {
+    width: 100%;
+    min-height: 280px;
+    resize: vertical;
+    font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--panel-bg);
+    color: var(--text);
+  }
+  .actions {
+    margin-top: 12px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  button {
+    font: inherit;
+    font-size: 14px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--panel-bg);
+    color: var(--text);
+    cursor: pointer;
+  }
+  button.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .status-text {
+    font-size: 13px;
+    color: var(--muted);
+    margin-left: 4px;
+  }
+  .error {
+    color: #b91c1c;
+    font-size: 13px;
+    margin-top: 8px;
+  }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <h1>Snap OCR</h1>
+    <button class="theme-toggle" id="themeToggle" type="button"></button>
+  </div>
+  <div class="layout">
+    <div class="panel preview-panel">
+      <div class="progress-label">Captured region</div>
+      <img id="preview" alt="Captured screenshot" />
+    </div>
+    <div class="panel result-panel">
+      <div class="lang-row">
+        <label for="langSelect">Language</label>
+        <select id="langSelect"></select>
+        <span class="lang-hint" id="langHint"></span>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-label" id="progressLabel">Starting OCR...</div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      </div>
+      <textarea id="output" placeholder="Extracted text will appear here..." spellcheck="false"></textarea>
+      <div class="actions">
+        <button class="primary" id="copyBtn" disabled>Copy text</button>
+        <button id="docsBtn" disabled>Open Google Docs</button>
+        <span class="status-text" id="statusText"></span>
+      </div>
+      <div class="error" id="errorText" hidden></div>
+    </div>
+  </div>
+  <script src="lib/tesseract.min.js"></script>
+  <script src="languages.js"></script>
+  <script src="result.js"></script>
+</body>
+</html>

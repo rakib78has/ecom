@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# Secrets / local env files
+.env
+.env.*
+!.env.example
+
+# Chrome extension signing/packing artifacts (never commit private keys)
+*.pem
+*.crx
+
+# OS/editor cruft
+.DS_Store
+Thumbs.db

@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "Snap OCR",
+  "version": "1.3.1",
+  "description": "Drag-select any area of your screen and get editable text instantly, using free offline OCR (Tesseract.js). No accounts, no API keys, nothing leaves your machine.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "Snap OCR - drag-select an area to extract text"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["activeTab", "scripting", "storage", "notifications"],
+  "commands": {
+    "activate-selection": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+U",
+        "mac": "Command+Shift+U"
+      },
+      "description": "Select an area of the screen to OCR"
+    }
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
+  }
+}
