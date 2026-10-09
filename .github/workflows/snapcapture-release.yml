@@ -1,0 +1,143 @@
+name: SnapCapture Release
+
+# Tag-driven release. Every quality gate from CI runs again here — a tag can
+# point at a commit that never went through a pull request.
+on:
+  push:
+    tags: ['snapcapture-v*']
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Build and package without publishing'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: ss
+
+jobs:
+  verify:
+    name: Verify release candidate
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: ss/.nvmrc
+          cache: npm
+          cache-dependency-path: ss/package-lock.json
+
+      - run: npm ci
+
+      # A tag that disagrees with the manifest produces a package the Web Store
+      # will reject, or worse, silently publishes the wrong version.
+      - name: Check the tag matches the manifest version
+        id: version
+        run: |
+          MANIFEST_VERSION=$(node -p "require('./public/manifest.json').version")
+          echo "version=$MANIFEST_VERSION" >> "$GITHUB_OUTPUT"
+
+          if [ "${{ github.event_name }}" = "push" ]; then
+            TAG_VERSION="${GITHUB_REF_NAME#snapcapture-v}"
+            if [ "$TAG_VERSION" != "$MANIFEST_VERSION" ]; then
+              echo "::error::Tag $GITHUB_REF_NAME declares $TAG_VERSION but the manifest says $MANIFEST_VERSION."
+              exit 1
+            fi
+          fi
+          echo "Releasing version $MANIFEST_VERSION"
+
+      - name: Check the changelog mentions this version
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          if ! grep -q "\[$VERSION\]" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no entry for $VERSION."
+            exit 1
+          fi
+
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test
+      - run: npm run build
+      - run: npm run validate:manifest
+
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Run end-to-end tests
+        run: xvfb-run --auto-servernum npx playwright test
+
+      - name: Package
+        run: npm run package
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: snapcapture-release-${{ steps.version.outputs.version }}
+          path: ss/snapcapture-*.zip
+          retention-days: 90
+          if-no-files-found: error
+
+  publish:
+    name: Publish to the Chrome Web Store
+    runs-on: ubuntu-latest
+    needs: verify
+    # A protected environment is what provides the manual approval step. Until
+    # the store credentials are configured as secrets, this job is skipped and
+    # the release stops at a verified, downloadable artifact.
+    environment: chrome-web-store
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: snapcapture-release-${{ needs.verify.outputs.version }}
+          path: ss
+
+      - name: Check that store credentials are configured
+        id: creds
+        env:
+          EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+        run: |
+          if [ -z "$EXTENSION_ID" ] || [ -z "$CLIENT_ID" ] || [ -z "$CLIENT_SECRET" ] || [ -z "$REFRESH_TOKEN" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Chrome Web Store secrets are not set; skipping publication. The verified package is attached to this run."
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload and publish
+        if: steps.creds.outputs.configured == 'true'
+        env:
+          EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+        run: |
+          npx --yes chrome-webstore-upload-cli@3 upload \
+            --source "snapcapture-${{ needs.verify.outputs.version }}.zip" \
+            --extension-id "$EXTENSION_ID" \
+            --client-id "$CLIENT_ID" \
+            --client-secret "$CLIENT_SECRET" \
+            --refresh-token "$REFRESH_TOKEN" \
+            --auto-publish
+
+      - name: Summarise outcome
+        run: |
+          if [ "${{ steps.creds.outputs.configured }}" = "true" ]; then
+            echo "### Published version ${{ needs.verify.outputs.version }} to the Chrome Web Store" >> "$GITHUB_STEP_SUMMARY"
+            echo "Chrome Web Store review can still reject it; check the developer dashboard." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### Built and verified version ${{ needs.verify.outputs.version }} — NOT published" >> "$GITHUB_STEP_SUMMARY"
+            echo "Store credentials are not configured. See docs/release-process.md." >> "$GITHUB_STEP_SUMMARY"
+          fi
