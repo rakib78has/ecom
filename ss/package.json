@@ -1,0 +1,45 @@
+{
+  "name": "snapcapture",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Chrome extension for screenshots (visible area, full page, selection) and screen recording.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20.19"
+  },
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "npm run build:pages && npm run build:content",
+    "build:pages": "vite build",
+    "build:content": "vite build --config vite.content.config.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run --project unit --project integration",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --project unit --project integration --coverage",
+    "test:e2e": "playwright test",
+    "validate:manifest": "node scripts/validate-build.mjs",
+    "package": "node scripts/package.mjs",
+    "verify": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build && npm run validate:manifest"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.64.0",
+    "@types/chrome": "^0.3.5",
+    "@types/node": "^26.6.4",
+    "@vitest/coverage-v8": "^5.0.3",
+    "eslint": "^10.12.0",
+    "eslint-config-prettier": "^10.1.8",
+    "fake-indexeddb": "^6.2.5",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.9",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.71.1",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.3"
+  }
+}

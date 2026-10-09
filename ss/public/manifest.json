@@ -1,11 +1,12 @@
 {
   "manifest_version": 3,
   "name": "SnapCapture — Free Screenshot Tool",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Take screenshots — visible area, full page, or a selection. 100% free, no sign-up, no limits.",
+  "minimum_chrome_version": "116",
   "permissions": ["activeTab", "downloads", "scripting", "storage"],
   "action": {
-    "default_popup": "popup.html",
+    "default_popup": "popup/popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
       "32": "icons/icon32.png",
@@ -20,6 +21,10 @@
     "128": "icons/icon128.png"
   },
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "service-worker.js",
+    "type": "module"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; frame-ancestors 'none'"
   }
 }
