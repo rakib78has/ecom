@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SnapCapture — Screen Recorder</title>
+  <link rel="stylesheet" href="recorder.css" />
+</head>
+<body>
+  <header>
+    <img src="icons/icon32.png" alt="" width="20" height="20" />
+    <h1>SnapCapture</h1>
+  </header>
+
+  <div id="select-toolbar" class="stage-toolbar hidden">
+    <p class="toolbar-hint">Drag on the preview to record just part of it, or record the whole thing.</p>
+    <div class="tool-group">
+      <button id="full-frame-btn">Record Full Frame</button>
+      <button id="confirm-area-btn" class="primary hidden">Start Recording (Selected Area)</button>
+    </div>
+  </div>
+
+  <div id="record-toolbar" class="stage-toolbar hidden">
+    <div class="tool-group">
+      <button id="annotate-toggle" class="tool-btn">✎ Annotate</button>
+      <button id="clear-annotations-btn">Clear</button>
+    </div>
+    <div class="color-group">
+      <button class="color-btn active" data-color="#ef4444" style="--swatch: #ef4444"></button>
+      <button class="color-btn" data-color="#2563eb" style="--swatch: #2563eb"></button>
+      <button class="color-btn" data-color="#facc15" style="--swatch: #facc15"></button>
+      <button class="color-btn" data-color="#22c55e" style="--swatch: #22c55e"></button>
+      <button class="color-btn" data-color="#0f172a" style="--swatch: #0f172a"></button>
+    </div>
+    <div class="rec-indicator">
+      <span class="rec-dot"></span>
+      <span id="timer">00:00</span>
+    </div>
+    <button id="stop-btn" class="danger">Stop Recording</button>
+  </div>
+
+  <main>
+    <section id="idle-view" class="view">
+      <button id="start-btn" class="primary">Start Recording</button>
+      <p class="hint">
+        You'll be asked to choose what to share — this tab, a window, or your
+        whole screen. Recording happens entirely in your browser; nothing is
+        uploaded anywhere.
+      </p>
+    </section>
+
+    <section id="stage-view" class="view hidden">
+      <div class="canvas-wrap">
+        <canvas id="stage-canvas"></canvas>
+      </div>
+    </section>
+
+    <section id="result-view" class="view hidden">
+      <div class="video-wrap">
+        <video id="preview-video" controls></video>
+      </div>
+      <div class="toolbar">
+        <button id="download-btn" class="primary">Download WEBM</button>
+        <button id="again-btn">Record Again</button>
+      </div>
+    </section>
+
+    <p id="status" class="status" role="status"></p>
+  </main>
+
+  <script src="recorder.js"></script>
+</body>
+</html>
