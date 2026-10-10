@@ -1,7 +1,0 @@
-# Prettier enforces LF (`endOfLine: 'lf'`), so the working tree must use LF on
-# every platform or `format:check` fails on a Windows checkout.
-* text=auto eol=lf
-
-*.png binary
-*.webm binary
-*.zip binary
