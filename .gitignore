@@ -13,3 +13,7 @@ node_modules/
 # OS/editor cruft
 .DS_Store
 Thumbs.db
+
+# Standalone repos nested in this folder (have their own .git)
+AccessScan/
+ss/
